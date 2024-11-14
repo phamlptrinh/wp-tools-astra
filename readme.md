@@ -3,8 +3,8 @@
 - Tạo wp-config.php và database
 - Cài đặt WordPress
 - Cài đặt các plugin cần thiết
-- Cài theme Kadence và Kadence Child
-- Cài đặt các plugins của Kadence Pro
+- Cài theme Astra và Astra Child
+- Cài đặt các plugins của Astra Pro, Kadence Block và Kadence Block Pro
 - Cài đặt woocommerce và woocommerce vietnam checkout (nếu cần)
 - Thiết lập các options thường dùng như múi giờ, định dạng ngày tháng, cấu trúc permalink.
 - Thiết lập các options cho các plugins
