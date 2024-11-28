@@ -28,6 +28,10 @@ echo Tạo thư mục %root%/%wp_site%/ ...
 mkdir %wp_site%
 cd %wp_site%
 
+:: Tao file wp-cli.yml để khi set permalink thì tạo file .htaccess
+echo apache_modules: > wp-cli.yml
+echo    - mod_rewrite >> wp-cli.yml
+
 echo(
 
 :: Download WordPress (uses WP-CLI)
