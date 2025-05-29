@@ -10,7 +10,7 @@ PUSHD %root%
 set db_user=root
 set db_password=
 set site_user=quantri
-set site_password=password#123
+set site_password=garden@123
 set site_email=test@example.com
 
 :: Nhập thông tin cài đặt
@@ -19,6 +19,8 @@ set /p wp_name=Tên website:
 set /p wp_db=Database (vd: wp-test):
 set has_woo=n
 set /p has_woo=Cài woocommerce? (y/n) [Default: n]:
+set choose_theme=no
+set /p choose_theme=Cài theme Astra/Kadence/none? (as/ka/no) [Default:no]:
 set use_virtual_host=y
 
 echo(
@@ -69,47 +71,96 @@ call wp option update time_format "H:i"
 call wp rewrite structure /%%%%postname%%%%/
 call wp rewrite flush --hard
 
+:: Install woocommerce?
 echo(
+if %has_woo%==y call wp plugin install woocommerce woo-vietnam-checkout --activate
 
+echo(
 :: Install theme
-echo Cài theme Astra...
-call wp theme install astra
+if %choose_theme%==as (
+    echo Cài theme Astra...
+    call wp theme install astra
 
-echo Cài theme astra-child ...
-copy %plugins_path%\astra-child.zip %root%\%wp_site%\wp-content\themes
-call 7z x -y %root%\%wp_site%\wp-content\themes\astra-child.zip -o%root%\%wp_site%\wp-content\themes -x!__MACOSX
-call wp theme activate astra-child
+    echo Cài đặt plugin Astra Addon...
+    copy %plugins_path%\astra-addon.zip %root%\%wp_site%\wp-content\plugins
+    call 7z x -y %root%\%wp_site%\wp-content\plugins\astra-addon.zip -o%root%\%wp_site%\wp-content\plugins -x!__MACOSX
+    call wp plugin activate astra-addon
+    call wp plugin install astra-import-export
+
+    echo Update Astra Addon options...
+    :: Astra Addon
+    if %has_woo%==y (
+        call wp option update _astra_ext_enabled_extensions "{\"advanced-hooks\":\"advanced-hooks\",\"blog-pro\":\"blog-pro\",\"colors-and-background\":\"colors-and-background\",\"advanced-footer\":\"\",\"mobile-header\":\"\",\"header-sections\":\"\",\"lifterlms\":\"\",\"learndash\":\"\",\"advanced-headers\":\"advanced-headers\",\"site-layouts\":\"site-layouts\",\"spacing\":\"spacing\",\"sticky-header\":\"sticky-header\",\"transparent-header\":\"\",\"typography\":\"typography\",\"woocommerce\":\"woocommerce\",\"edd\":\"\",\"nav-menu\":\"nav-menu\",\"all\":\"all\"}" --format=json
+    ) else (
+        call wp option update _astra_ext_enabled_extensions "{\"advanced-hooks\":\"advanced-hooks\",\"blog-pro\":\"blog-pro\",\"colors-and-background\":\"colors-and-background\",\"advanced-footer\":\"\",\"mobile-header\":\"\",\"header-sections\":\"\",\"lifterlms\":\"\",\"learndash\":\"\",\"advanced-headers\":\"advanced-headers\",\"site-layouts\":\"site-layouts\",\"spacing\":\"spacing\",\"sticky-header\":\"sticky-header\",\"transparent-header\":\"\",\"typography\":\"typography\",\"woocommerce\":\"\",\"edd\":\"\",\"nav-menu\":\"nav-menu\",\"all\":\"all\"}" --format=json
+    )
+)
 
 echo(
+if %choose_theme%==ka (
+    echo Cài theme Kadence...
+    call wp theme install kadence
+
+    echo Cài đặt plugin Kadence Pro...
+    copy %plugins_path%\kadence-pro.zip %root%\%wp_site%\wp-content\plugins
+    call 7z x -y %root%\%wp_site%\wp-content\plugins\kadence-pro.zip -o%root%\%wp_site%\wp-content\plugins -x!__MACOSX
+    call wp plugin activate kadence-pro
+
+    echo Update Kadence pro options...
+    :: Kadence Pro
+    if %has_woo%==y (
+        call wp option update kadence_pro_theme_config "{\"header_addons\":true,\"elements\":true,\"archive_meta\":true,\"scripts\":true,\"woocommerce_addons\":true}"
+    ) else (
+        call wp option update kadence_pro_theme_config "{\"header_addons\":true,\"elements\":true,\"archive_meta\":true,\"scripts\":true}"
+    )
+)
+
+echo(
+
+if %choose_theme% neq no (
+    echo Cài theme gpc-child-theme ...
+    copy %plugins_path%\gpc-child-theme.zip %root%\%wp_site%\wp-content\themes
+    call 7z x -y %root%\%wp_site%\wp-content\themes\gpc-child-theme.zip -o%root%\%wp_site%\wp-content\themes -x!__MACOSX
+    if %choose_theme%==ka (
+        del %root%\%wp_site%\wp-content\themes\gpc-child-theme\style.css
+        ren "%root%\%wp_site%\wp-content\themes\gpc-child-theme\style-kadence.css" "%root%\%wp_site%\wp-content\themes\gpc-child-theme\style.css"
+    )
+
+    echo Run composer install ...
+    PUSHD %root%\%wp_site%\wp-content\themes\gpc-child-theme
+    call composer install
+    POPD
+    call wp theme activate gpc-child-theme
+)
+
+echo(
+
+:: Delete akismet, hello dolly
+call wp plugin delete akismet hello
 
 :: Install plugins
 echo Cài đặt plugins...
 call wp plugin install advanced-database-cleaner disable-gutenberg fakerpress go-live-update-urls kadence-blocks wpsite-show-ids smtp-mailer autodescription unbloater classic-menu-block astra-import-export
 call wp plugin activate disable-gutenberg fakerpress kadence-blocks wpsite-show-ids unbloater
 
-:: Install woocommerce?
-if %has_woo%==y call wp plugin install woocommerce woo-vietnam-checkout --activate
-
 echo(
 
-echo Cài đặt plugin Astra Addon và Kadence Blocks Pro...
-copy %plugins_path%\astra-addon.zip %root%\%wp_site%\wp-content\plugins
-call 7z x -y %root%\%wp_site%\wp-content\plugins\astra-addon.zip -o%root%\%wp_site%\wp-content\plugins -x!__MACOSX
-
+echo Cài đặt plugin Kadence Blocks Pro...
 copy %plugins_path%\kadence-blocks-pro.zip %root%\%wp_site%\wp-content\plugins
 call 7z x -y %root%\%wp_site%\wp-content\plugins\kadence-blocks-pro.zip -o%root%\%wp_site%\wp-content\plugins -x!__MACOSX
+call wp plugin activate kadence-blocks-pro
 
-call wp plugin activate astra-addon kadence-blocks-pro
+echo(
+echo Cài đặt plugin GPC Dev tools...
+copy %plugins_path%\gpc-dev-tools.zip %root%\%wp_site%\wp-content\plugins
+call 7z x -y %root%\%wp_site%\wp-content\plugins\gpc-dev-tools.zip -o%root%\%wp_site%\wp-content\plugins -x!__MACOSX
 
 echo(
 
-echo Update Kadence pro options...
-:: Kadence Pro
-if %has_woo%==y (
-    call wp option update _astra_ext_enabled_extensions "{\"advanced-hooks\":\"advanced-hooks\",\"blog-pro\":\"blog-pro\",\"colors-and-background\":\"colors-and-background\",\"advanced-footer\":\"\",\"mobile-header\":\"\",\"header-sections\":\"\",\"lifterlms\":\"\",\"learndash\":\"\",\"advanced-headers\":\"advanced-headers\",\"site-layouts\":\"site-layouts\",\"spacing\":\"spacing\",\"sticky-header\":\"sticky-header\",\"transparent-header\":\"\",\"typography\":\"typography\",\"woocommerce\":\"woocommerce\",\"edd\":\"\",\"nav-menu\":\"nav-menu\",\"all\":\"all\"}" --format=json
-) else (
-    call wp option update _astra_ext_enabled_extensions "{\"advanced-hooks\":\"advanced-hooks\",\"blog-pro\":\"blog-pro\",\"colors-and-background\":\"colors-and-background\",\"advanced-footer\":\"\",\"mobile-header\":\"\",\"header-sections\":\"\",\"lifterlms\":\"\",\"learndash\":\"\",\"advanced-headers\":\"advanced-headers\",\"site-layouts\":\"site-layouts\",\"spacing\":\"spacing\",\"sticky-header\":\"sticky-header\",\"transparent-header\":\"\",\"typography\":\"typography\",\"woocommerce\":\"\",\"edd\":\"\",\"nav-menu\":\"nav-menu\",\"all\":\"all\"}" --format=json
-)
+:: Xoá sidebar widgets
+call wp option update sidebars_widgets "{\"wp_inactive_widgets\":[],\"sidebar-1\":[],\"header-widget\":[],\"footer-widget-1\":[],\"footer-widget-2\":[],\"ast-widgets\":[],\"array_version\":3}" --format=json
+
+call wp option update widget_block "{\"_multiwidget\":1}" --format=json
 
 echo(
 
