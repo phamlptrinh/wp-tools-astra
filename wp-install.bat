@@ -122,12 +122,14 @@ if %choose_theme% neq no (
     copy %plugins_path%\gpc-child-theme.zip %root%\%wp_site%\wp-content\themes
     call 7z x -y %root%\%wp_site%\wp-content\themes\gpc-child-theme.zip -o%root%\%wp_site%\wp-content\themes -x!__MACOSX
     if %choose_theme%==ka (
-        del %root%\%wp_site%\wp-content\themes\gpc-child-theme\style.css
-        ren "%root%\%wp_site%\wp-content\themes\gpc-child-theme\style-kadence.css" "%root%\%wp_site%\wp-content\themes\gpc-child-theme\style.css"
+        PUSHD "%root%\%wp_site%\wp-content\themes\gpc-child-theme"
+        del style.css
+        ren "style-kadence.css" "style.css"
+        POPD
     )
 
     echo Run composer install ...
-    PUSHD %root%\%wp_site%\wp-content\themes\gpc-child-theme
+    PUSHD "%root%\%wp_site%\wp-content\themes\gpc-child-theme"
     call composer install
     POPD
     call wp theme activate gpc-child-theme
